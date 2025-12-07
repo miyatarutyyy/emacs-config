@@ -35,7 +35,7 @@
 ;; --------------------------------------------------
 ;; If private email is not loaded, you may set a fallback:
 ;; (setq user-mail-address "hogefuga@example.com")
-;; Normally left unset - the private 3233343536file should define it.
+;; Normally left unset - the private file should define it.
 
 
 ;; --------------------------------------------------
