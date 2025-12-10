@@ -1,0 +1,25 @@
+;;; -*- lexical-binding: t -*-
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("bedd1e101adba906b1f5a15502b4f960e323ad6018649aff1d69663fbac67d07"
+     default))
+ '(elcord-idle-message "IDLE: Emacs Broke My Pinky Finger")
+ '(elcord-idle-timer 300)
+ '(package-selected-packages
+   '(cape corfu jupyter jupyter-ascending macrostep marginalia orderless
+	  org-modern org-roam podcaster puni rainbow-delimiters sly
+	  vertico))
+ '(package-vc-selected-packages
+   '((vim-jp-radio :url "https://github.com/vim-jp-radio/vim-jp-radio.el"))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(cursor ((t (:background "#F66E25"))))
+ '(fill-column-indicator ((t (:foreground "#7A3A00"))))
+ '(hl-line ((t (:background "#421a01")))))

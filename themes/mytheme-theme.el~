@@ -1,0 +1,75 @@
+;;; mytheme-theme.el --- Simple black-orange theme -*- lexical-binding: t; no-byte-compile: t; -*-
+;;; Commentary:
+;; Minimal black background + orange foreground. Red for warnings.
+;; This file focuses on structure/consistency. Palette is centralized.
+
+;;; Code:
+
+(deftheme mytheme
+  "Simple theme: black background, orange text, red warnings.")
+
+(let*((class '((class color) (min-colors 89)))
+      ; =====Palette=====
+      (bg     "#000000")
+      (fg     "#F66E25")
+      (warn   "#FF3333")
+      (green  "#44FF44")
+      (gray   "#1a1a1a")
+      (dim    "#222222")
+      (tab-bg "#000000")
+      (tab-fg "#F66E25"))
+  
+  (custom-theme-set-faces
+   'mytheme
+   ;; ===== Basics =====
+   `(default                         ((,class (:background ,bg :foreground ,fg))))
+   `(cursor                          ((,class (:background ,fg))))
+   `(region                          ((,class (:background ,dim :extend t))))
+   `(fringe                          ((,class (:background ,bg))))
+   `(minibuffer-prompt               ((,class (:foreground ,fg :weight bold))))
+   `(vertical-border                 ((,class (:foreground ,dim))))
+
+
+   ; ===== Mode Line =====
+   `(mode-line                       ((,class (:background ,fg :foreground ,bg :weight bold))))
+   `(mode-line-inactive              ((,class (:background ,gray :foreground "#444444"))))
+
+   ;; ===== Tab Bar =====
+   `(tab-bar                         ((,class (:background ,tab-bg :foreground ,fg))))
+   `(tab-bar-tab                     ((,class (:background ,tab-fg :foreground ,bg :weight bold))))
+   `(tab-bar-tab-inactive            ((,class (:background ,tab-bg :foreground ,tab-fg))))
+
+   ;; ===== Tab Line (buffer tabs) =====
+   `(tab-line                        ((,class (:inherit nil :background ,bg :foreground ,fg :box nil :overline nil :underline nil))))
+   `(tab-line-tab-current            ((,class (:inherit tab-line :background ,tab-fg :foreground ,bg
+                                             :weight bold :box (:line-width 1 :color ,tab-fg)))))
+   `(tab-line-tab                    ((,class (:inherit tab-line :background ,bg :foreground ,tab-fg :box nil))))
+   `(tab-line-tab-inactive           ((,class (:inherit tab-line :background ,bg :foreground ,tab-fg :box nil))))
+   `(tab-line-highlight              ((,class (:inherit tab-line :background ,bg :foreground ,tab-fg :box nil))))
+   `(tab-line-close-highlight        ((,class (:inherit tab-line :background ,bg :foreground ,warn :box nil))))
+
+   ;; ===== GUI Elements =====
+   `(tool-bar                        ((,class (:background ,bg :foreground ,fg :box nil))))
+   `(menu-bar                        ((,class (:background ,bg :foreground ,fg :box nil))))
+   `(header-line                     ((,class (:background ,bg :foreground ,fg :box nil))))
+
+   ;; ===== Line Numbers =====
+   `(line-number                     ((,class (:foreground ,green :background ,bg))))
+   `(line-number-current-line        ((,class (:foreground ,fg :background ,bg :weight bold))))
+
+   ;; ===== Messages / States =====
+   `(warning                         ((,class (:foreground ,warn :weight bold))))
+   `(error                           ((,class (:foreground ,warn :weight bold))))
+   `(success                         ((,class (:foreground ,green :weight bold))))
+
+   ;; ===== Comments =====
+   `(font-lock-comment-face          ((,class (:foreground "#CC7A33" :slant italic))))
+   `(font-lock-comment-delimiter-face((,class (:foreground "#CC7A33" :slant italic))))))
+
+;;; ### autoload
+(when (and load-file-name (boundp 'custom-theme-load-path))
+  (add-to-list 'custom-theme-load-path
+	       (file-name-as-directory (file-name-directory load-file-name))))
+
+(provide-theme 'mytheme)
+;;; mytheme-theme.el ends here

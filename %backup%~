@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+#====================================================
+# Execute Fastfetch + Yay update when this PC startup
+#====================================================
+
+# left side : fastfetch
+kitty --hold --title "Fastfetch" --geometry 90x30+0+0 -e fastfetch &
+
+# wait a second and execute right side
+sleep 1
+
+# right side : yay update
+kitty --hold --title "System Update" --geometry 90x30+960+0 -e bash -c "sudo yay -Syu" &
+

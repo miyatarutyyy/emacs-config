@@ -1,0 +1,5 @@
+/home/trt-ryzen7/.emacs.d/elpa/vterm-20251119.1653/build/CMakeFiles/vterm-module.dir
+/home/trt-ryzen7/.emacs.d/elpa/vterm-20251119.1653/build/CMakeFiles/libvterm.dir
+/home/trt-ryzen7/.emacs.d/elpa/vterm-20251119.1653/build/CMakeFiles/run.dir
+/home/trt-ryzen7/.emacs.d/elpa/vterm-20251119.1653/build/CMakeFiles/edit_cache.dir
+/home/trt-ryzen7/.emacs.d/elpa/vterm-20251119.1653/build/CMakeFiles/rebuild_cache.dir
