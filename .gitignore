@@ -10,6 +10,8 @@ auto-save-list/
 # editor junk
 *~
 *.elc
+#*#
+.#*
 
 # user state (DO NOT TRACK)
 custom.el
@@ -23,3 +25,4 @@ url/
 
 # native binaries (OS dependent)
 tree-sitter/
+

@@ -88,12 +88,6 @@
   :ensure t)
 
 
-(leaf undo-tree
-  :ensure t
-  :global-minor-mode global-undo-tree-mode
-  :custom
-  (undo-tree-auto-save-history . nil))
-
 ;; Vertico: minibuffer completion UI
 ;; - Replaces the default *Completion* window with a vertical list
 ;;   shown directly in the minibuffer.
@@ -182,14 +176,16 @@
 (add-to-list 'web-mode-content-types-alist
              '("jsx" . "\\.astro\\'"))
 
-;; assosiation of Eglot(LSP) and Atsto
+;; Association of Eglot(LSP) and Astro
 (with-eval-after-load 'eglot
-  (add-to-list 'eglot-server-programs
-               '(astro-mode .
-                            ("astro-ls" "--stdio"
-                             :initializationOptions
-                             (:typescript
-                              (:tsdk "node_modules/typescript/lib"))))))
+  (add-to-list
+   'eglot-server-programs
+   '(astro-mode .
+     ("/home/trt-ryzen7/.nvm/versions/node/v24.11.1/bin/astro-ls"
+      "--stdio"
+      :initializationOptions
+      (:typescript
+       (:tsdk "node_modules/typescript/lib"))))))
 
 ;; activate Eglot Automatically when I use Astro
 (add-hook 'astro-mode-hook #'eglot-ensure)
@@ -506,6 +502,7 @@
 (load (expand-file-name "config/elcord.el" user-emacs-directory))
 
 (load (expand-file-name "config/vim-jp-radio.el" user-emacs-directory))
+(load (expand-file-name "config/undo-tree.el" user-emacs-directory))
 
 (provide 'init)
 ;;; init.el ends here.
