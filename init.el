@@ -333,19 +333,6 @@
 
 
 ;;; =========================================================
-;;; Github Copilot (copilot.el)
-;;; =========================================================
-
-(leaf copilot
-  :ensure t
-  :hook prog-mode-hook
-  :bind
-  (:copilot-completion-map
-   ("<tab>" . copilot-accept-completion)
-   ("M-n"   . copilot-next-completion)
-   ("M-p"   . copilot-previous-completion)))
-
-;;; =========================================================
 ;;; 6) Common Lisp (SLY + SBCL)
 ;;; =========================================================
 
@@ -503,6 +490,8 @@
 
 (load (expand-file-name "config/vim-jp-radio.el" user-emacs-directory))
 (load (expand-file-name "config/undo-tree.el" user-emacs-directory))
+
+(require 'config-copilot)
 
 (provide 'init)
 ;;; init.el ends here.
