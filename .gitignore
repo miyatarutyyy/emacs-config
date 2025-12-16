@@ -1,1 +1,25 @@
+# private sandbox
 private/
+
+# caches & runtime
+.cache/
+elpa/
+eln-cache/
+auto-save-list/
+
+# editor junk
+*~
+*.elc
+
+# user state (DO NOT TRACK)
+custom.el
+eshell/
+maildrafts/
+org-roam.db
+projects/
+tramp/
+transient/
+url/
+
+# native binaries (OS dependent)
+tree-sitter/
