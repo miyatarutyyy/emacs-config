@@ -269,11 +269,6 @@
 
 
 
-(leaf vterm
-  :ensure t)
-
-
-
 (leaf magit
   :ensure t
   :commands (magit-status))
@@ -490,6 +485,9 @@
 
 (load (expand-file-name "config/vim-jp-radio.el" user-emacs-directory))
 (load (expand-file-name "config/undo-tree.el" user-emacs-directory))
+(load (expand-file-name "config/copilot.el" user-emacs-directory))
+(load (expand-file-name "config/eat.el" user-emacs-directory))
+(load (expand-file-name "config/which-key.el" user-emacs-directory))
 
 (require 'config-copilot)
 
