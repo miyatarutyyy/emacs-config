@@ -60,18 +60,6 @@
 
 
 
-;;; =========================================================
-;;; file viewing functions
-;;; =========================================================
-
-(leaf pdf-tools
-  :ensure t
-  :config
-  (pdf-tools-install))
-
-(add-hook 'pdf-view-mode-hook
-	  (lambda ()
-	    (display-line-numbers-mode -1)))
 
 (leaf treemacs
   :ensure t)
@@ -488,6 +476,7 @@
 (load (expand-file-name "config/copilot.el" user-emacs-directory))
 (load (expand-file-name "config/eat.el" user-emacs-directory))
 (load (expand-file-name "config/which-key.el" user-emacs-directory))
+(load (expand-file-name "config/pdf-tools.el" user-emacs-directory))
 
 (require 'config-copilot)
 
