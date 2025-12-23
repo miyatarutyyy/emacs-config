@@ -48,7 +48,7 @@
 
 ;; always use python tree-sitter
 (add-to-list 'major-mode-remap-alist '(python-mode . python-ts-mode))
-	     
+(setq treesit-font-lock-level 4)	     
 
 
 ;;; ==========================================================
@@ -137,11 +137,11 @@
 ;; Examples: M-. go to definition, M-, go back, eglot-rename
 (leaf eglot
   :tag "builtin"
-  :hook ((python-mode        . eglot-ensure)
-	 (python-ts-mode     . eglot-ensure)
+  :hook ((python-ts-mode     . eglot-ensure)
 	 (typescript-ts-mode . eglot-ensure)
 	 (tsx-ts-mode        . eglot-ensure)
-	 (js-ts-mode         . eglot-ensure))
+	 (js-ts-mode         . eglot-ensure)
+         (astro-ts-mode      . eglot-ensure))
   :custom
   (eglot-autoshutdown . t)
   :config
@@ -149,34 +149,6 @@
 	   '((js-ts-mode typescript-ts-mode tsx-ts-mode)
 	     . ("typescript-language-server" "--stdio"))))
 
-
-
-(require 'web-mode)
-
-;; Astro Mode ----------------------------------------------------
-;; (setup for using Astro based on web-mode)
-(define-derived-mode astro-mode web-mode "Astro"
-  "Major mode for Astro (.astro)files.")
-
-;; link astro-mode to .astro
-(add-to-list 'auto-mode-alist '("\\.astro\\'" . astro-mode))
-
-(add-to-list 'web-mode-content-types-alist
-             '("jsx" . "\\.astro\\'"))
-
-;; Association of Eglot(LSP) and Astro
-(with-eval-after-load 'eglot
-  (add-to-list
-   'eglot-server-programs
-   '(astro-mode .
-     ("/home/trt-ryzen7/.nvm/versions/node/v24.11.1/bin/astro-ls"
-      "--stdio"
-      :initializationOptions
-      (:typescript
-       (:tsdk "node_modules/typescript/lib"))))))
-
-;; activate Eglot Automatically when I use Astro
-(add-hook 'astro-mode-hook #'eglot-ensure)
 
 (leaf web-mode
   :ensure t
@@ -186,14 +158,10 @@
         web-mode-css-indent-offset 2
         web-mode-code-indent-offset 2
         web-mode-enable-auto-indentation nil
-        indent-tabs-mode nil)
+        indent-tabs-mode nil))
 
-  ;; --- Astro 専用設定（ここが今回の追加部分ですの） ---
-  (add-to-list 'web-mode-engines-alist '("astro" . "\\.astro\\'"))
-  (setq web-mode-engine-detection t)
-)
-
-
+;; Astro (Tree-sitter)
+(add-to-list 'auto-mode-alist '("\\.astro\\'" . astro-ts-mode))
 
 
 ;; Enable Tree-sitter based TypeScript mode
@@ -205,34 +173,6 @@
   :ensure nil ;; built-in
   :config
   (add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode)))
-
-
-
-(with-eval-after-load 'web-mode
-  ;; インデント幅をすべて2に統一（HTML / CSS / JS / Astro など）
-  (setq web-mode-markup-indent-offset 2)
-  (setq web-mode-css-indent-offset 2)
-  (setq web-mode-code-indent-offset 2)
-
-  ;; タブではなくスペースで
-  (setq indent-tabs-mode nil)
-
-  ;; 自動インデントの暴走を抑える
-  (setq web-mode-enable-auto-indentation nil)
-)
-
-
-(leaf sqlite
-  :require t)
-
-;; open DB
-(setq db (sqlite-open "~/iniad/cs2_lec_handout/blog_sample/db.sqlite3"))
-
-;; table list
-(sqlite-execute db "SELECT name FROM sqlite_master WHERE type='table';")
-
-;; get data
-(sqlite-select db "SELECT * FROM blog_article;")
 
 
 
@@ -474,7 +414,6 @@
 (load (expand-file-name "config/vim-jp-radio.el" user-emacs-directory))
 (load (expand-file-name "config/undo-tree.el" user-emacs-directory))
 (load (expand-file-name "config/copilot.el" user-emacs-directory))
-(load (expand-file-name "config/eat.el" user-emacs-directory))
 (load (expand-file-name "config/which-key.el" user-emacs-directory))
 (load (expand-file-name "config/pdf-tools.el" user-emacs-directory))
 
