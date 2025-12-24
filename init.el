@@ -416,6 +416,7 @@
 (load (expand-file-name "config/copilot.el" user-emacs-directory))
 (load (expand-file-name "config/which-key.el" user-emacs-directory))
 (load (expand-file-name "config/pdf-tools.el" user-emacs-directory))
+(load (expand-file-name "config/ace-window.el" user-emacs-directory))
 
 (require 'config-copilot)
 

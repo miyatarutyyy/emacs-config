@@ -9,7 +9,7 @@
 	elcord-editor-name "GNU/Emacs"
 	elcord-use-major-mode-as-icon t
 	elcord-idle-timer 600
-	elcord-idle-message "I'm sick of using f*ckin' Emacs")
+	elcord-idle-message "Emacs is SHIT")
   (elcord-mode 1))
 
 (provide 'config-elcord)
