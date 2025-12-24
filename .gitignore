@@ -10,7 +10,7 @@ auto-save-list/
 # editor junk
 *~
 *.elc
-#*#
+\#*\#
 .#*
 
 # user state (DO NOT TRACK)
