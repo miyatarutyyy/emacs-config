@@ -41,11 +41,11 @@
   (load custom-file 'noerror))
 
 
-;; Startup behavior (suppress splash & prevent resizing flicker)
+;; Startup behavior (suppress splash & prevent resizing flicker)(
 (setq inhibit-startup-screen t
       frame-inhibit-implied-resize t)
 
-
+(require 'treesit)
 ;; always use python tree-sitter
 (add-to-list 'major-mode-remap-alist '(python-mode . python-ts-mode))
 (setq treesit-font-lock-level 4)	     
@@ -419,6 +419,7 @@
 (load (expand-file-name "config/which-key.el" user-emacs-directory))
 (load (expand-file-name "config/pdf-tools.el" user-emacs-directory))
 (load (expand-file-name "config/ace-window.el" user-emacs-directory))
+(load (expand-file-name "config/emacs-libvterm.el" user-emacs-directory))
 
 (require 'config-copilot)
 
