@@ -161,6 +161,8 @@
         indent-tabs-mode nil))
 
 ;; Astro (Tree-sitter)
+(add-to-list 'treesit-language-source-alist
+             '(astro "https://github.com/virchau13/tree-sitter-astro"))
 (add-to-list 'auto-mode-alist '("\\.astro\\'" . astro-ts-mode))
 
 
