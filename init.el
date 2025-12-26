@@ -54,13 +54,6 @@
 ;;; ==========================================================
 ;;; 2) Convenience Functions / Keybinds
 ;;; ==========================================================
-
-;; Make C-h delete backward (instead of help)
-(global-set-key (kbd "C-h") #'delete-backward-char)
-
-
-
-
 (leaf treemacs
   :ensure t)
 
@@ -420,8 +413,9 @@
 (load (expand-file-name "config/pdf-tools.el" user-emacs-directory))
 (load (expand-file-name "config/ace-window.el" user-emacs-directory))
 (load (expand-file-name "config/emacs-libvterm.el" user-emacs-directory))
+(load (expand-file-name "config/keybind.el" user-emacs-directory))
 
 (require 'config-copilot)
-
+ 
 (provide 'init)
 ;;; init.el ends here.

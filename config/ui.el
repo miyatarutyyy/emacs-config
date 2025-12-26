@@ -72,3 +72,4 @@
 (setq debug-on-error t)
 
 (blink-cursor-mode 0)
+
