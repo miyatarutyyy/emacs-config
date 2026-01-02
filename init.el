@@ -196,60 +196,6 @@
   :ensure t
   :commands (magit-status))
 
-
-
-;;; =========================================================
-;;; 4) Jupyter Integration
-;;; =========================================================
-
-(leaf jupyter
-  :ensure t
-  :after org
-  :config
-  (setenv "PATH"
-	  (concat "/home/trt-ryzen7/anaconda3/bin:"
-		  (getenv "PATH")))
-  (add-to-list 'exec-path
-	       "/home/trt-ryzen7/anaconda3/bin")
-  (setq jupyter-command
-	"/home/trt-ryzen7/anaconda3/bin/jupyter")
-  
-  ;; add jupyter to Org babel
-  (add-to-list
-   'org-babel-load-languages '(jupyter . t))
-  (org-babel-do-load-languages
-   'org-babel-load-languages org-babel-load-languages)
-
-  (add-hook 'org-mode-hook
-	    (lambda ()
-	      (setq-local completion-at-point-functions
-			  (remq #'jupyter-org-completion-at-point
-				completion-at-point-functions))
-	      (setq-local corfu-auto-delay 0.15)))
-  
-  ;; allow Jupyter CAPF when it is in Org Sorce blok
-  (with-eval-after-load 'jupyter-org
-    (ignore-errors
-      (advice-remove 'jupyter-org-completion-at-point
-		     #'my/jupyter-capf-guard)))
-  
-  ;; fix python command to Anaconda one
-  (setq org-babel-python-command
-	"/home/trt-ryzen7/anaconda3/bin/python")
-
-  ;; stop asking the confirmation when evaluate code block
-  (setq org-confirm-babel-evaluate nil))
-
-(with-eval-after-load 'jupyter-org
-  (ignore-errors
-    (advice-remove 'jupyter-org-completion-at-point
-		   #'my/jupyter-capf-guard))
-  (defun my/jupyter-capf-null (&rest _args) nil)
-  (advice-add 'jupyter-org-completion-at-point
-	      :override #'my/jupyter-capf-null))
-
-
-
 ;;; =========================================================
 ;;; 6) Common Lisp (SLY + SBCL)
 ;;; =========================================================
