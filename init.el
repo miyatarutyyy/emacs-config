@@ -9,6 +9,10 @@
           (expand-file-name
            (file-name-directory (or load-file-name byte-compile-current-file))))))
 
+;; Prioritize UTF-8 (Unix) and fix the default for new saves to UTF-8 (Unix)
+(prefer-coding-system 'utf-8-unix)
+(setq-default buffer-file-coding-system 'utf-8-unix)
+
 
 ;; Package archives & Leaf bootstrap
 (eval-and-compile
