@@ -226,114 +226,8 @@
 ;;; 7) Optional Themes Package (kept if you use doom-themes elsewhere)
 ;;; =========================================================
 
-
 ;; Kept disabled (no direct dependency for transparency); enable if you use it.
 ;; (leaf doom-themes :ensure t)
-
-
-
-;;; ========================================================
-;;; 8) org-mode
-;;; ========================================================
-
-(leaf org
-  :hook
-  ((org-mode-hook . visual-line-mode))
-  :custom
-  (org-src-fontify-natively         . t)
-  (org-src-tab-acts-natively        . t)
-  (org-edit-src-content-indentation . 0)
-  (org-src-preserve-indentation     . t)
-  (org-src-window-setup             . 'split-window-below)
-  :config
-  (setq org-todo-keywords
-	'((sequence "TODO(t)" "DOING(o)" "|" "DONE(d)" "CANCEL(c)")))
-  (add-to-list 'org-src-lang-modes '("python" . python-ts)))
-  
-  ;; org-capture settings
-  ;; Todo capture is now available
-  (setq org-capture-templates
-	'(("t" "Todo" entry
-	   (file+headline "~/org/inbox.org" "Tasks")
-	   "* TODO %?\n  %U\n")))
-  
-  ;; display png file on current buffer automatically
-  (add-hook 'org-babel-after-execute-hook
-	    'org-display-inline-images)
-  (setq org-startup-with-inline-images t)
-
-;; make UI modern 
-(leaf org-modern
-  :ensure t
-  :hook (org-mode-hook . org-modern-mode)
-  :custom
-  (org-modern-hide-stars . t))
-
-
-
-;; Personal Knowledge Management System
-(leaf org-roam
-  :ensure t
-  :after org
-  :preface
-  ;; Org-roam prefix (C-c n)
-  (define-prefix-command 'org-roam-prefix)
-  :bind
-  (("C-c n" . org-roam-prefix))
-  :config
-  (setq org-roam-directory (expand-file-name "~/org/roam/" org-directory))
-
-  (define-key org-roam-prefix (kbd "f") #'org-roam-node-find)
-  (define-key org-roam-prefix (kbd "i") #'org-roam-node-insert)
-  (define-key org-roam-prefix (kbd "c") #'org-roam-capture)
-
-  (define-prefix-command 'org-roam-dailies-prefix)
-  (define-key org-roam-prefix (kbd "d") 'org-roam-dailies-prefix)
-  (define-key org-roam-dailies-prefix (kbd "d") #'org-roam-dailies-goto-today)
-  (define-key org-roam-dailies-prefix (kbd "t") #'org-roam-dailies-capture-today)
-
-  (org-roam-db-autosync-mode 1))
-
-
-
-;; Graphviz providing visualized graph structure
-(leaf org-roam-graph
-  :after org-roam
-  :config
-  (setq org-roam-graph-viewer nil
-	org-roam-graph-executable "dot"
-	org-roam-graph-filetype "svg"
-	org-roam-graph-extra-config
-	'(("overlap" . "false")
-          ("splines" . "true")
-          ("rankdir" . "LR")   
-          ("nodesep" . "0.35")
-          ("ranksep" . "0.6")
-          ("dpi" . "150")))
-  (setq org-roam-graph-node-extra-config
-        '((shape . "box") (style . "rounded,filled")
-          (fillcolor . "white") (color . "gray30")))
-  (setq org-roam-graph-edge-extra-config
-        '((color . "gray40") (penwidth . "1.1"))))
-
-
-
-;;; =========================================================
-;;; Reveal.js
-;;; =========================================================
-
-(leaf ox-reveal
-  :ensure t
-  :config
-  (require 'ox-reveal))
-
-(setq org-reveal-root "file:///home/trt-ryzen7/reveal.js")
-
-;(setq org-reveal-highlight "zenburn")
-;(setq org-src-fontify-natively t)
-;(setq org-src-tab-acts-natively t)
-
-
 
 ;;; =========================================================
 ;;; Footer
@@ -360,6 +254,7 @@
 (load (expand-file-name "config/ace-window.el" user-emacs-directory))
 (load (expand-file-name "config/emacs-libvterm.el" user-emacs-directory))
 (load (expand-file-name "config/keybind.el" user-emacs-directory))
+(load (expand-file-name "config/org.el" user-emacs-directory))
 
 (require 'config-copilot)
  
