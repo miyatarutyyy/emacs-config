@@ -18,7 +18,13 @@
 
 (setq default-input-method nil) ; disable default input method
 
-
+;; Smooth scrolling: keep point on screen, minimal recentering.
+(setq scroll-conservatively 101
+      scroll-margin 3
+      scroll-step 1)
+;; Mouse wheel: fixed speed, no accerleration
+(setq mouse-wheel-scroll-amount '(1 ((shift) . 1) ((control) . nil))
+      mouse-wheel-progressive-speed nil)
 
 ;; ----------------------------------------------------
 ;; 2) font & frame_paramater
