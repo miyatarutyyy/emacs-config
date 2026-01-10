@@ -27,38 +27,56 @@
 ;; Capture templates
 (setq my-org-reading-template
       (string-join
-       '("* %^{Title} :marginalia:%^{TopicTags}:"
-	 "%U"
+       '("#+title: %^{Title}"
+	 "#+date: %U"
          ""
          ":PROPERTIES:"
-         ":AUTHOR: %^{Author}"
-         ":PUBLISHER: %^{Publisher}"
-         ":YEAR: %^{Year}"
-         ":STATUS: %^{Status|READING|FINISHED}"
+         ":AUTHOR: "
+         ":PUBLISHER: "
+         ":YEAR: "
+         ":STATUS: "
          ":END:"
          ""
-	 "- 価値 :: %^{Weight|important|reference|once}"
-         "- 感想 :: %^{Impression}"
-	 "- 疑問 :: %^{Question}"
-	 "- 次回 :: %^{Next}"
+	 "- 価値 :: "
+         "- 感想 :: "
+	 "- 疑問 :: "
+	 "- 次回 :: "
 	 ""
-	 "- 位置 :: %^{Location}"
-         "- 抜粋 :: %^{Excerpt}"
-	 "- 感想 :: %^{ExcerptImpression}"
+	 "- 位置 :: "
+         "- 抜粋 :: "
+	 "- 感想 :: "
 	 ""
 	 "%?")
        "\n"))
-	 
 
-	 
+(defun my-org--slugify (s)
+  (let* ((s (downcase s))
+         (s (replace-regexp-in-string "[^[:alnum:][:space:]-]" "" s))
+         (s (replace-regexp-in-string "[[:space:]]+" "-" s))
+         (s (replace-regexp-in-string "-+" "-" s)))
+    (string-trim s "-+" "-+")))
+
+(defun my-org-capture-reading-path ()
+  (unless (and (stringp my-org-marginalia-dir)
+	       (not (string= my-org-marginalia-dir "")))
+          (user-error "my-org-marginalia-dir is undefined"))
+  (make-directory my-org-marginalia-dir t)
+  (expand-file-name
+   (format-time-string "%Y%m%d-%H%M%S.org")
+   my-org-marginalia-dir))
+
+(setq org-capture-window-setup 'current-window)
+
 (setq org-capture-templates
-      `(("r" "Marginalia note" entry
-         (file+headline ,my-org-reading-file "Inbox")
+      `(
+	("r" "Marginalia note" plain
+         (file ,(function my-org-capture-reading-path))
 	 ,my-org-reading-template
+	 :jump-to-captured t
          :empty-lines 1)
         ("i" "Inbox" entry
          (file+headline ,org-default-notes-file "Inbox")
-         "* %?\n%U\n"
+         "* TODO %?\n%U\n"
          :empty-lines 1)))
 
 (provide 'config-org)
