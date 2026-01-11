@@ -61,6 +61,11 @@
 (leaf treemacs
   :ensure t)
 
+;; Delete selection (delsel): replace active region by typing
+(leaf delsel
+  :tag "builtin"
+  :init
+  (delete-selection-mode 1))
 
 ;;; =========================================================
 ;;; 3) Packages — Development Aids
@@ -261,6 +266,6 @@
 (load (expand-file-name "config/org.el" user-emacs-directory))
 
 (require 'config-copilot)
- 
+      
 (provide 'init)
 ;;; init.el ends here.
