@@ -12,6 +12,8 @@
 (tab-bar-mode -1)        ; disable Emacs tab-bar (top)
 (global-tab-line-mode 1) ; enable simple tab-line (bottom)
 
+(setq display-line-numbers-type 'relative) ;; Relative line numbers
+(setq display-line-numbers-current-absolute t)
 (global-display-line-numbers-mode 1) ; line number in this buffer
 (line-number-mode 1)                 ; show current line in modeline
 (column-number-mode 1)               ; show current column in modeline
