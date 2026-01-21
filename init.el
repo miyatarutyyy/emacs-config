@@ -140,16 +140,18 @@
 (leaf eglot
   :tag "builtin"
   :hook ((python-ts-mode     . eglot-ensure)
-	 (typescript-ts-mode . eglot-ensure)
-	 (tsx-ts-mode        . eglot-ensure)
-	 (js-ts-mode         . eglot-ensure)
+         (typescript-ts-mode . eglot-ensure)
+         (tsx-ts-mode        . eglot-ensure)
+         (js-ts-mode         . eglot-ensure)
          (astro-ts-mode      . eglot-ensure))
   :custom
   (eglot-autoshutdown . t)
   :config
   (add-to-list 'eglot-server-programs
-	   '((js-ts-mode typescript-ts-mode tsx-ts-mode)
-	     . ("typescript-language-server" "--stdio"))))
+               '((js-ts-mode typescript-ts-mode tsx-ts-mode)
+                 . ("typescript-language-server" "--stdio")))
+  (add-to-list 'eglot-server-programs
+               '(astro-ts-mode . ("astro-ls" "--stdio"))))
 
 
 (leaf web-mode
@@ -197,7 +199,8 @@
            cape-dabbrev)
        '(cape-file
          cape-dabbrev))))
-  (add-hook 'prog-mode-hook #'my/eglot-super-capf))
+  (add-hook 'prog-mode-hook #'my/eglot-super-capf)
+  (add-hook 'astro-ts-mode-hook #'my/eglot-super-capf))
 
 
 
@@ -243,7 +246,7 @@
 ;;; =========================================================
 
 ;;; =========================================================
-;;; Load Custom Configs
+;;; Loa Custom Configs
 ;;; =========================================================
 ;;; In the future, make load setup like this
 ;;; (dolist (file '("ui" "mail"))
