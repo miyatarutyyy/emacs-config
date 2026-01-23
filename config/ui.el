@@ -81,3 +81,4 @@
 
 (blink-cursor-mode 0)
 
+(provide 'config-ui)

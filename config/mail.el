@@ -58,3 +58,5 @@
 ;; 5) Message as the default Mail User Agent
 ;; --------------------------------------------------
 (setq mail-user-agent 'message-user-agent)
+
+(provide 'config-mail)

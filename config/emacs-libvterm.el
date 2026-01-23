@@ -11,4 +11,4 @@
 	vterm-max-scrollback 10000))
 
 
-(provide 'emacs-libvterm)
+(provide 'config-emacs-libvterm)

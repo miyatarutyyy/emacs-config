@@ -5,3 +5,5 @@
 
 ;; ace-window
 (keymap-global-set "M-o" #'ace-window)
+
+(provide 'config-keybind)

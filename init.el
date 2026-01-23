@@ -1,4 +1,4 @@
-;;; ==========================================================
+;; ==========================================================
 ;;; 0) Bootstrap / Early Init
 ;;; ==========================================================
 
@@ -45,7 +45,7 @@
   (load custom-file 'noerror))
 
 
-;; Startup behavior (suppress splash & prevent resizing flicker)(
+;; Startup behavior (suppress splash & prevent resizing flicker)
 (setq inhibit-startup-screen t
       frame-inhibit-implied-resize t)
 
@@ -56,7 +56,7 @@
 
 
 ;;; ==========================================================
-;;; 2) Convenience Functions / Keybinds
+;;; 2) Convenience Functions / Keybind
 ;;; ==========================================================
 (leaf treemacs
   :ensure t)
@@ -246,29 +246,32 @@
 ;;; =========================================================
 
 ;;; =========================================================
-;;; Loa Custom Configs
+;;; Config loader (safe, explicit order)
 ;;; =========================================================
-;;; In the future, make load setup like this
-;;; (dolist (file '("ui" "mail"))
-;;;   (load (expand-file-name (format "config/%s.el" file)
-;;;                           user-emacs-directory)))
-;;; ========================================================
 
-(load (expand-file-name "config/ui.el" user-emacs-directory))
-(load (expand-file-name "config/mail.el" user-emacs-directory))
-(load (expand-file-name "config/elcord.el" user-emacs-directory))
+(add-to-list 'load-path (expand-file-name "config" user-emacs-directory))
 
-(load (expand-file-name "config/vim-jp-radio.el" user-emacs-directory))
-(load (expand-file-name "config/undo-tree.el" user-emacs-directory))
-(load (expand-file-name "config/copilot.el" user-emacs-directory))
-(load (expand-file-name "config/which-key.el" user-emacs-directory))
-(load (expand-file-name "config/pdf-tools.el" user-emacs-directory))
-(load (expand-file-name "config/ace-window.el" user-emacs-directory))
-(load (expand-file-name "config/emacs-libvterm.el" user-emacs-directory))
-(load (expand-file-name "config/keybind.el" user-emacs-directory))
-(load (expand-file-name "config/org.el" user-emacs-directory))
+(defun my/require-config (feature)
+  "Require FEATURE safely; log failures without aborting init."
+  (condition-case err
+      (require feature)
+    (error
+     (message "[init] Failed to load %S: %s" feature (error-message-string err)))))
 
-(require 'config-copilot)
+;; Load order matters: keep it explicit.
+(dolist (feat '(config-ui
+                config-mail
+                config-elcord
+                config-vim-jp-radio
+                config-undo-tree
+                config-copilot
+                config-which-key
+                config-pdf-tools
+                config-ace-window
+                config-emacs-libvterm
+                config-keybind
+                config-org))
+  (my/require-config feat))
       
 (provide 'init)
 ;;; init.el ends here.

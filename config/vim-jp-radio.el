@@ -12,4 +12,4 @@
 (leaf vim-jp-radio
   :vc (:url "https://github.com/vim-jp-radio/vim-jp-radio.el"))
 
-(provide 'vim-jp-radio)
+(provide 'config-vim-jp-radio)
