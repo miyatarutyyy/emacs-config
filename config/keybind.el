@@ -17,4 +17,9 @@
 
 (keymap-global-set "M-h" #'backward-delete-word)
 
+;; bs: buffer cycle
+(require 'bs)
+(keymap-global-set "M-]" #'bs-cycle-next)
+(keymap-global-set "M-[" #'bs-cycle-previous)
+
 (provide 'config-keybind)
