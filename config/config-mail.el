@@ -50,7 +50,8 @@
 ;; :Saving Draft:
 ;; 4) Drafts
 ;; --------------------------------------------------
-(setq message-auto-save-directory "~/.emacs.d/maildrafts")
+(setq message-auto-save-directory
+      (expand-file-name "maildrafts" user-emacs-directory))
 
 
 ;; --------------------------------------------------

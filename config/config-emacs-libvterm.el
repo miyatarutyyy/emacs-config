@@ -2,7 +2,7 @@
 ;;; emacs-libvterm.el
 ;;; ========================================================
 (add-to-list 'load-path
-	     (expand-file-name "~/.emacs.d/config/emacs-libvterm"))
+	     (expand-file-name "config/emacs-libvterm" user-emacs-directory))
 
 (leaf vterm
   :require t
