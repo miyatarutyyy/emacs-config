@@ -1,4 +1,4 @@
-;; ==========================================================
+;;; ==========================================================
 ;;; 0) Bootstrap / Early Init
 ;;; ==========================================================
 
@@ -96,7 +96,7 @@
 (leaf orderless
   :ensure t
   :init
-  (setq completion-styles'(orderless)
+  (setq completion-styles '(orderless)
 	completion-category-defaults nil
 	completion-category-overrides
 	'((file (styles . (partial-completion))))))
@@ -215,7 +215,7 @@
 (leaf sly
   :ensure t
   :hook
-  (lisp-mode-hook . sly-mode)
+  (lisp-mode . sly-mode)
   :custom
   (inferior-lisp-program . "sbcl"))
 
