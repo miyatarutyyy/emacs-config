@@ -245,6 +245,8 @@
 ;;; Footer
 ;;; =========================================================
 
+(define-key global-map (kbd "C-c /") 'comment-or-uncomment-region)
+
 ;;; =========================================================
 ;;; Config loader (safe, explicit order)
 ;;; =========================================================
@@ -272,6 +274,6 @@
                 config-keybind
                 config-org))
   (my/require-config feat))
-      
+
 (provide 'init)
 ;;; init.el ends here.
