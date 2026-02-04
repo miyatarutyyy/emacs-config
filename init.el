@@ -272,7 +272,8 @@
                 config-ace-window
                 config-emacs-libvterm
                 config-keybind
-                config-org))
+                config-org
+		config-wiki-rencontre))
   (my/require-config feat))
 
 (provide 'init)
