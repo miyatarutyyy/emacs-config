@@ -78,37 +78,6 @@
   :ensure t)
 
 
-;; Vertico: minibuffer completion UI
-;; - Replaces the default *Completion* window with a vertical list
-;;   shown directly in the minibuffer.
-;; - Affects all minibuffer-based commands
-;;   (M-x, find-file, switch-to-buffer, etc.)
-;; - Only changes how candidates are displayed;
-;;   it does not change the matching algorithm itself.
-(leaf vertico
-  :ensure t
-  :init (vertico-mode 1))
-
-
-;; Completion style: flexible matching
-;; Orderless enables space-separated pattern matching
-;; Partial completion for file paths only
-(leaf orderless
-  :ensure t
-  :init
-  (setq completion-styles '(orderless)
-	completion-category-defaults nil
-	completion-category-overrides
-	'((file (styles . (partial-completion))))))
-
-
-;; Adds annotations to minibuffer completion candidates
-;; (e.g., file type, variable/function info)
-(leaf marginalia
-  :ensure t
-  :init (marginalia-mode 1))
-
-
 ;; Popup completion UI (CAPF front-end)
 ;; Integrates seamlessly with Eglot, Cape, dabbrev, etc.
 ;; Keys: C-n / C-p navigate, TAB to confirm
@@ -220,20 +189,6 @@
   (inferior-lisp-program . "sbcl"))
 
 
-
-;;; ========================================================
-;;; 6.5) JOKE
-;;; ========================================================
-
-
-(leaf w3m
-  :ensure t
-  :commands (w3m w3m-browse-url)
-  :config
-  (setq w3m-display-inline-images t)
-  (setq browse-url-browser-function 'w3m-browse-url))
-
-
 ;;; =========================================================
 ;;; 7) Optional Themes Package (kept if you use doom-themes elsewhere)
 ;;; =========================================================
@@ -261,10 +216,12 @@
      (message "[init] Failed to load %S: %s" feature (error-message-string err)))))
 
 ;; Load order matters: keep it explicit.
-(dolist (feat '(config-ui
-                config-mail
-                config-elcord
-                config-vim-jp-radio
+(dolist (feat '(completion-minibuffer
+		completion
+		config-ui
+		config-mail
+		config-elcord
+		config-vim-jp-radio
                 config-undo-tree
                 config-copilot
                 config-which-key
@@ -273,6 +230,7 @@
                 config-emacs-libvterm
                 config-keybind
                 config-org
+		config-browse
 		config-wiki-rencontre))
   (my/require-config feat))
 
