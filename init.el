@@ -13,24 +13,45 @@
 (prefer-coding-system 'utf-8-unix)
 (setq-default buffer-file-coding-system 'utf-8-unix)
 
+;;; =============================================================
+;;; Package archives & Leaf bootstrap
+;;; -------------------------------------------------------------
+;;; - set GNU ELPA and MELPA as a Package Distributor
+;;; - install leaf and leaf-keywords when emacs dosen't have them
+;;; - enable leaf and allow to be written on leaf style
+;;; - enable hydra and blackout
+;;; =============================================================
+;; Package archives
+(setq package-archives '(("gnu"   . "https://elpa.gnu.org/packages/")
+                         ("melpa" . "https://melpa.org/packages/")))
+(require 'package)
+(unless package--initialized
+  (package-initialize))
 
-;; Package archives & Leaf bootstrap
-(eval-and-compile
-  (customize-set-variable
-   'package-archives '(("gnu"   . "https://elpa.gnu.org/packages/")
-                       ("melpa" . "https://melpa.org/packages/")))
-  (package-initialize)
-  (unless (package-installed-p 'leaf)
-    (package-refresh-contents)
-    (package-install 'leaf))
+;; Using &rest allows me to pass as many arguments as I like.
+(defun my/ensure-packages (&rest pkgs)
+  "Ensure PKGS are installed. Refresh content at most once."
+  (let ((refreshed nil))
+    (dolist (p pkgs)
+      (unless (package-installed-p p)
+	(unless refreshed
+	  (package-refresh-contents)
+	  (setq refreshed t))
+	(condition-case err
+	    (package-install p)
+	  (error
+	   (message "[init] Failed to install %s: %s"
+		    p (error-message-string err))
+	   (signal (car err) (cdr err))))))))
 
-  (leaf leaf-keywords
-    :ensure t
-    :init
-    (leaf hydra :ensure t)
-    (leaf blackout :ensure t)
-    :config
-    (leaf-keywords-init)))
+;; Bootstrap leaf stack (runtime only)
+(my/ensure-packages 'leaf 'leaf-keywords 'hydra 'blackout)
+
+(require 'leaf)
+(require 'leaf-keywords)
+(leaf-keywords-init)
+(leaf hydra)
+(leaf blackout)
 
 
 
@@ -225,7 +246,6 @@
                 config-undo-tree
                 config-copilot
                 config-which-key
-                config-pdf-tools
                 config-ace-window
                 config-emacs-libvterm
                 config-keybind
