@@ -12,12 +12,12 @@
          ("C-p" . corfu-previous)
          ("M-n" . corfu-next)
          ("M-p" . corfu-previous))
-  :init (global-corfu-mode 1))
-
-(leaf corfu-popupinfo
-  :ensure t
-  :after corfu
-  :hook (corfu-mode . corfu-popupinfo-mode))
+  :init
+  (global-corfu-mode 1)
+  :config
+  ;; enable popupinfo (bundled with corfu)
+  (require 'corfu-popupinfo)
+  (corfu-popupinfo-mode 1))
 
 (leaf cape
   :ensure t
