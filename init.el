@@ -25,8 +25,7 @@
 (setq package-archives '(("gnu"   . "https://elpa.gnu.org/packages/")
                          ("melpa" . "https://melpa.org/packages/")))
 (require 'package)
-(unless package--initialized
-  (package-initialize))
+(package-initialize)
 
 ;; Using &rest allows me to pass as many arguments as I like.
 (defun my/ensure-packages (&rest pkgs)
@@ -64,11 +63,6 @@
   (unless (file-exists-p custom-file)
     (with-temp-buffer (write-file custom-file)))
   (load custom-file 'noerror))
-
-
-;; Startup behavior (suppress splash & prevent resizing flicker)
-(setq inhibit-startup-screen t
-      frame-inhibit-implied-resize t)
 
 (require 'treesit)
 ;; always use python tree-sitter
