@@ -64,17 +64,30 @@
     (with-temp-buffer (write-file custom-file)))
   (load custom-file 'noerror))
 
+;;; ==========================================================
+;;; Treesit (Tree-sitter) — languages / modes / remap
+;;; ==========================================================
+
 (require 'treesit)
-;; always use python tree-sitter
+
+;; Highlight richness (0..4)
+(setq treesit-font-lock-level 4)
+
+;; Grammar sources (install via `M-x treesit-install-language-grammar`)
+(dolist (spec
+         '((typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+           (tsx        "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+           (astro      "https://github.com/virchau13/tree-sitter-astro")))
+  (add-to-list 'treesit-language-source-alist spec))
+
+;; File extensions -> ts modes
+(add-to-list 'auto-mode-alist '("\\.ts\\'"  . typescript-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.astro\\'" . astro-ts-mode))
+
+;; Prefer ts-modes when both exist
 (add-to-list 'major-mode-remap-alist '(python-mode . python-ts-mode))
-(setq treesit-font-lock-level 4)	     
-(with-eval-after-load 'treesit
-  (add-to-list 'treesit-language-source-alist
-	       '(typescript "https://github.com/tree-sitter/tree-sitter-typescript"
-                            "master" "typescript/src"))
-  (add-to-list 'treesit-language-source-alist
-               '(tsx "https://github.com/tree-sitter/tree-sitter-typescript"
-                     "master" "tsx/src")))
+
 
 ;;; ==========================================================
 ;;; 2) Convenience Functions / Keybind
@@ -151,25 +164,8 @@
   (setq web-mode-markup-indent-offset 2
         web-mode-css-indent-offset 2
         web-mode-code-indent-offset 2
-        web-mode-enable-auto-indentation nil
-        indent-tabs-mode nil))
-
-;; Astro (Tree-sitter)
-(add-to-list 'treesit-language-source-alist
-             '(astro "https://github.com/virchau13/tree-sitter-astro"))
-(add-to-list 'auto-mode-alist '("\\.astro\\'" . astro-ts-mode))
-
-
-;; Enable Tree-sitter based TypeScript mode
-(leaf typescript-ts-mode
-  :ensure nil ;; built-in
-  :config
-  (add-to-list 'auto-mode-alist '("\\.ts\\'"  . typescript-ts-mode)))
-(leaf tsx-ts-mode
-  :ensure nil ;; built-in
-  :config
-  (add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode)))
-
+        web-mode-enable-auto-indentation nil)
+  (setq-local indent-tabs-mode nil))
 
 
 ;; Extra completion sources to supplement LSP
