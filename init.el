@@ -167,6 +167,8 @@
         web-mode-enable-auto-indentation nil)
   (setq-local indent-tabs-mode nil))
 
+(add-hook 'web-mode-hook #'hs-minor-mode)
+
 
 ;; Extra completion sources to supplement LSP
 ;; - dabbrev: buffer-based word completion
