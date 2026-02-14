@@ -216,10 +216,19 @@
 ;; (leaf doom-themes :ensure t)
 
 ;;; =========================================================
-;;; Footer
+;;; TMP
 ;;; =========================================================
 
 (define-key global-map (kbd "C-c /") 'comment-or-uncomment-region)
+
+(defun insert-template-termMemo ()
+  "Insert the org template file `~/.emacs.d/org-templates/term-memo.org"
+  (interactive)
+  (let* ((template (expand-file-name "org-templates/term-memo.org"
+				     user-emacs-directory)))
+    (unless (file-exists-p template)
+      (user-error "Template not found: %s" template))
+    (insert-file-contents template)))
 
 ;;; =========================================================
 ;;; Config loader (safe, explicit order)
