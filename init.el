@@ -230,6 +230,9 @@
       (user-error "Template not found: %s" template))
     (insert-file-contents template)))
 
+
+(auto-image-file-mode t)
+
 ;;; =========================================================
 ;;; Config loader (safe, explicit order)
 ;;; =========================================================
