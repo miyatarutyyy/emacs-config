@@ -137,16 +137,9 @@
   :hook (corfu-mode . corfu-popupinfo-mode))
 
 
-;; Built-in LSP client
-;; Automatically starts LSP servers for supported languages
-;; Examples: M-. go to definition, M-, go back, eglot-rename
 (leaf eglot
   :tag "builtin"
-  :hook ((python-ts-mode     . eglot-ensure)
-         (typescript-ts-mode . eglot-ensure)
-         (tsx-ts-mode        . eglot-ensure)
-         (js-ts-mode         . eglot-ensure)
-         (astro-ts-mode      . eglot-ensure))
+  :require t
   :custom
   (eglot-autoshutdown . t)
   :config
@@ -155,6 +148,23 @@
                  . ("typescript-language-server" "--stdio")))
   (add-to-list 'eglot-server-programs
                '(astro-ts-mode . ("astro-ls" "--stdio"))))
+
+;; --- Auto start Eglot (robust, no leaf :hook) ---
+(with-eval-after-load 'eglot
+  (add-hook 'python-ts-mode-hook      #'eglot-ensure)
+  (add-hook 'typescript-ts-mode-hook  #'eglot-ensure)
+  (add-hook 'tsx-ts-mode-hook         #'eglot-ensure)
+  (add-hook 'js-ts-mode-hook          #'eglot-ensure)
+  (add-hook 'astro-ts-mode-hook       #'eglot-ensure))
+
+;; Flymake はここだけでOK（lambda内の flymake-mode は不要）
+(add-hook 'prog-mode-hook #'flymake-mode)
+(setq flymake-no-changes-timeout 0.5)
+
+(with-eval-after-load 'project
+  (add-to-list 'project-vc-extra-root-markers "package.json")
+  (add-to-list 'project-vc-extra-root-markers "tsconfig.json"))
+
 
 
 (leaf web-mode
