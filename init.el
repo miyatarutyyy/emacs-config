@@ -84,16 +84,56 @@
 (add-to-list 'auto-mode-alist '("\\.ts\\'"  . typescript-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.astro\\'" . astro-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-ts-mode))
 
 ;; Prefer ts-modes when both exist
 (add-to-list 'major-mode-remap-alist '(python-mode . python-ts-mode))
 
+;;
+(setq-default js-indent-level 2)
+(setq-default ts-indent-level 2)
+
+(use-package apheleia
+  :ensure t
+  :config
+  (apheleia-global-mode +1))
+
+(with-eval-after-load 'apheleia
+  ;; プロジェクトの node_modules/.bin を使わせるため、npx 経由に固定
+  (setf (alist-get 'prettier-npx apheleia-formatters)
+        '("npx" "prettier"
+          "--stdin-filepath" filepath
+          "--use-tabs" "false"
+          "--tab-width" "2"))
+
+  ;; （必要なら）web-mode も prettier を使う
+  (setf (alist-get 'web-mode apheleia-mode-alist) 'prettier-npx
+
+        (alist-get 'js-mode apheleia-mode-alist) 'prettier-npx
+        (alist-get 'typescript-mode apheleia-mode-alist) 'prettier-npx
+        (alist-get 'tsx-ts-mode apheleia-mode-alist) 'prettier-npx
+        (alist-get 'typescript-ts-mode apheleia-mode-alist) 'prettier-npx
+        (alist-get 'js-ts-mode apheleia-mode-alist) 'prettier-npx))
 
 ;;; ==========================================================
 ;;; 2) Convenience Functions / Keybind
 ;;; ==========================================================
 (leaf treemacs
-  :ensure t)
+  :ensure t
+  :config
+  (setq treemacs-width 30))
+
+(global-set-key (kbd "C-c t") #'treemacs)
+
+(defun my/treemacs-show-current-project ()
+  "現在の project.el プロジェクトだけを treemacs に表示する。"
+  (interactive)
+  (require 'treemacs)
+  (when (project-current nil)
+    (treemacs)
+    (treemacs-add-and-display-current-project-exclusively)))
+
+(add-hook 'emacs-startup-hook #'my/treemacs-show-current-project)
 
 ;; Delete selection (delsel): replace active region by typing
 (leaf delsel
@@ -144,10 +184,10 @@
   (eglot-autoshutdown . t)
   :config
   (add-to-list 'eglot-server-programs
-               '((js-ts-mode typescript-ts-mode tsx-ts-mode)
+	       '((js-ts-mode typescript-ts-mode tsx-ts-mode)
                  . ("typescript-language-server" "--stdio")))
   (add-to-list 'eglot-server-programs
-               '(astro-ts-mode . ("astro-ls" "--stdio"))))
+	       '(astro-ts-mode . ("astro-ls" "--stdio"))))
 
 ;; --- Auto start Eglot (robust, no leaf :hook) ---
 (with-eval-after-load 'eglot
@@ -166,16 +206,17 @@
   (add-to-list 'project-vc-extra-root-markers "tsconfig.json"))
 
 
-
 (leaf web-mode
   :ensure t
   :mode ("\\.html\\'" "\\.css\\'")
-  :config
-  (setq web-mode-markup-indent-offset 2
-        web-mode-css-indent-offset 2
-        web-mode-code-indent-offset 2
-        web-mode-enable-auto-indentation nil)
-  (setq-local indent-tabs-mode nil))
+  :hook ((web-mode-hook . (lambda ()
+                            (setq-local indent-tabs-mode nil)
+                            (setq-local tab-width 2)
+                            (hs-minor-mode 1))))
+  :custom ((web-mode-markup-indent-offset . 2)
+           (web-mode-css-indent-offset . 2)
+           (web-mode-code-indent-offset . 2)
+           (web-mode-enable-auto-indentation . nil)))
 
 (add-hook 'web-mode-hook #'hs-minor-mode)
 
@@ -218,6 +259,44 @@
   (inferior-lisp-program . "sbcl"))
 
 
+
+;;; =========================================================
+;;; Clojure / ClojureScript
+;;; =========================================================
+
+(leaf clojure-mode
+  :ensure t
+  :mode (("\\.clj\\'" . clojure-mode)
+         ("\\.cljs\\'" . clojure-mode)
+         ("\\.cljc\\'" . clojure-mode))
+  :hook ((clojure-mode-hook . subword-mode)
+         (clojure-mode-hook . electric-pair-local-mode)))
+
+(leaf cider
+  :ensure t
+  :after clojure-mode
+  :hook ((clojure-mode-hook . cider-mode)
+         (cider-repl-mode-hook . paredit-mode))
+  :custom ((cider-repl-display-help-banner . nil)
+           (cider-save-file-on-load . t)))
+
+(leaf paredit
+  :ensure t
+  :hook ((clojure-mode-hook . paredit-mode)
+         (emacs-lisp-mode-hook . paredit-mode)
+         (lisp-mode-hook . paredit-mode)))
+
+(leaf rainbow-delimiters
+  :ensure t
+  :hook (clojure-mode-hook . rainbow-delimiters-mode))
+
+
+;;; =========================================================
+;;; yaml
+;;; =========================================================
+
+
+
 ;;; =========================================================
 ;;; 7) Optional Themes Package (kept if you use doom-themes elsewhere)
 ;;; =========================================================
@@ -231,6 +310,8 @@
 
 (define-key global-map (kbd "C-c /") 'comment-or-uncomment-region)
 
+
+
 (defun insert-template-termMemo ()
   "Insert the org template file `~/.emacs.d/org-templates/term-memo.org"
   (interactive)
@@ -241,8 +322,8 @@
     (insert-file-contents template)))
 
 
-(auto-image-file-mode t)
 
+(auto-image-file-mode t)
 ;;; =========================================================
 ;;; Config loader (safe, explicit order)
 ;;; =========================================================
@@ -271,7 +352,9 @@
                 config-keybind
                 config-org
 		config-browse
-		config-wiki-rencontre))
+		config-wiki-rencontre
+		my-path-comment
+		))
   (my/require-config feat))
 
 (provide 'init)
