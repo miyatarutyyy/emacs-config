@@ -1,0 +1,7 @@
+# --- Emacs backup ---
+*~
+\#*\#
+.\#*
+
+# --- Emacs runtime artifacts ---
+/auto-save-list/
