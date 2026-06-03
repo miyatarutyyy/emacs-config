@@ -730,6 +730,107 @@ Expected entry in ~/.authinfo.gpg:
   (setq gptel-backend my/gptel-iniad-openai-backend
         gptel-model "o4-mini"))
 
+;;; ----------------------------------------------------------
+;;; AI commit messages: gptel-magit
+;;; ----------------------------------------------------------
+
+(use-package gptel-magit
+  :after (gptel magit)
+  :hook (magit-mode . gptel-magit-install)
+  :init
+  (defcustom my/gptel-magit-commit-style 'conventional-japanese
+    "Commit message style used by gptel-magit."
+    :type '(choice
+            (const :tag "Conventional Commit / Japanese" conventional-japanese)
+            (const :tag "Conventional Commit / English" conventional-english)
+            (const :tag "Plain Commit / Japanese" plain-japanese)
+            (const :tag "Plain Commit / English" plain-english))
+    :group 'gptel-magit)
+
+  (defun my/gptel-magit-commit-prompt ()
+    "Return a commit prompt according to `my/gptel-magit-commit-style'."
+    (pcase my/gptel-magit-commit-style
+      ('conventional-japanese
+       (concat
+        gptel-magit-prompt-conventional-commits
+        "\n\n"
+        "Additional rules:\n"
+        "- Write the commit message in Japanese.\n"
+        "- Keep the Conventional Commits prefix in English, such as feat:, fix:, docs:, refactor:.\n"
+        "- The description after the prefix should be Japanese.\n"
+        "- Output only the commit message.\n"
+        "- Do not include markdown fences.\n"))
+
+      ('conventional-english
+       (concat
+        gptel-magit-prompt-conventional-commits
+        "\n\n"
+        "Additional rules:\n"
+        "- Write the entire commit message in English.\n"
+        "- Output only the commit message.\n"
+        "- Do not include markdown fences.\n"))
+
+      ('plain-japanese
+       "You are an expert at writing Git commit messages.
+
+Generate a concise Git commit message from the staged diff.
+
+Rules:
+- Write the commit message in Japanese.
+- Do not use Conventional Commits prefixes such as feat:, fix:, docs:, refactor:.
+- First line: concise summary.
+- If necessary, add a blank line and a short body.
+- Prefer intent and user-visible effect over implementation details.
+- Output only the commit message.
+- Do not include markdown fences.
+- Do not include the raw diff.
+- Do not invent changes that are not present in the diff.")
+
+      ('plain-english
+       "You are an expert at writing Git commit messages.
+
+Generate a concise Git commit message from the staged diff.
+
+Rules:
+- Write the commit message in English.
+- Do not use Conventional Commits prefixes such as feat:, fix:, docs:, refactor:.
+- First line: concise summary.
+- If necessary, add a blank line and a short body.
+- Prefer intent and user-visible effect over implementation details.
+- Output only the commit message.
+- Do not include markdown fences.
+- Do not include the raw diff.
+- Do not invent changes that are not present in the diff.")))
+
+  (defun my/gptel-magit-set-commit-style ()
+    "Select commit message style for gptel-magit."
+    (interactive)
+    (setq my/gptel-magit-commit-style
+          (intern
+           (completing-read
+            "Commit message style: "
+            '("conventional-japanese"
+              "conventional-english"
+              "plain-japanese"
+              "plain-english")
+            nil t nil nil
+            (symbol-name my/gptel-magit-commit-style))))
+    (setq gptel-magit-commit-prompt
+          (my/gptel-magit-commit-prompt))
+    (message "gptel-magit commit style: %s"
+             my/gptel-magit-commit-style))
+
+  :config
+  ;; Default:
+  ;;   Conventional Commits + Japanese
+  (setq gptel-magit-commit-prompt
+        (my/gptel-magit-commit-prompt))
+
+  ;; Convenient global selector.
+  (global-set-key
+   (kbd "C-c g m")
+   #'my/gptel-magit-set-commit-style))
+
 ;;; ==========================================================
 ;;; EIN Emacs IPython Notebook
 ;;; ==========================================================
