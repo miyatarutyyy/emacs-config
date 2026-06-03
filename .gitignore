@@ -12,6 +12,8 @@
 /recentf
 /places
 /custom.el
+/.emacs.desktop
+/.emacs.desktop.lock
 
 # --- Local tool state ---
 /.codex
