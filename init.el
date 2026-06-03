@@ -562,6 +562,39 @@
   (find-file user-init-file))
 
 ;;; ==========================================================
+;;; Clipboard
+;;; ==========================================================
+
+(setq select-enable-clipboard t
+      save-interprogram-paste-before-kill t)
+
+(defun my/wayland-clipboard-available-p ()
+  "Return non-nil when Wayland clipboard commands are available."
+  (and (getenv "WAYLAND_DISPLAY")
+       (getenv "XDG_RUNTIME_DIR")
+       (executable-find "wl-copy")
+       (executable-find "wl-paste")))
+
+(defun my/wayland-clipboard-copy (text)
+  "Copy TEXT to the Wayland clipboard using wl-copy."
+  (with-temp-buffer
+    (insert text)
+    (call-process-region (point-min) (point-max) "wl-copy" nil nil nil)))
+
+(defun my/wayland-clipboard-paste ()
+  "Return text from the Wayland clipboard using wl-paste."
+  (with-timeout (1 nil)
+    (with-temp-buffer
+      (when (zerop (call-process "wl-paste" nil t nil "--no-newline"))
+        (let ((text (buffer-string)))
+          (unless (string-empty-p text)
+            text))))))
+
+(when (my/wayland-clipboard-available-p)
+  (setq interprogram-cut-function #'my/wayland-clipboard-copy
+        interprogram-paste-function #'my/wayland-clipboard-paste))
+
+;;; ==========================================================
 ;;; Terminal
 ;;; ==========================================================
 
@@ -577,9 +610,6 @@
   :config
   (require 'project)
   (require 'seq)
-
-  (setq select-enable-clipboard t)
-  (setq save-interprogram-paste-before-kill t)
 
   (with-eval-after-load 'vterm
     ;; paste
@@ -705,31 +735,35 @@
    '((emacs-lisp . t)
      (python . t))))
 
+;; Emacs daemon / systemd から jupyter を見つけられるようにする
+(let ((kaggle-venv-bin "/home/trt-ryzen7/kaggle-project/.venv/bin"))
+  (when (file-directory-p kaggle-venv-bin)
+    (add-to-list 'exec-path kaggle-venv-bin)
+    (setenv "PATH" (concat kaggle-venv-bin path-separator (getenv "PATH")))))
+
+
 (use-package jupyter
   :ensure t
-  :defer nil
+  :after org
   :config
+  ;; ここが重要。org-babel-execute:jupyter-python を定義させる
   (require 'ob-jupyter)
 
-  ;; Org-Babel に jupyter を登録
-  (with-eval-after-load 'org
-    (org-babel-do-load-languages
-     'org-babel-load-languages
-     '((emacs-lisp . t)
-       (python . t)
-       (jupyter . t))))
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((emacs-lisp . t)
+     (python . t)
+     (jupyter . t)))
 
-  ;; jupyter-python を jupyter の別名として扱う
-  (with-eval-after-load 'ob-jupyter
-    (defalias 'org-babel-execute:jupyter-python
-      #'org-babel-execute:jupyter))
+  ;; jupyter-python src block を Python として編集・色付けする
+  (add-to-list 'org-src-lang-modes '("jupyter-python" . python))
+  (add-to-list 'org-src-lang-modes '(jupyter-python . python))
 
-  ;; jupyter-python ブロックの標準設定
+  ;; まずは同期・output に寄せる。async は後で戻す
   (setq org-babel-default-header-args:jupyter-python
         '((:session . "kaggle")
           (:kernel . "python3")
-          (:async . "yes")
-          (:results . "both")
+          (:results . "output")
           (:exports . "both"))))
 
 ;;; ==========================================================
