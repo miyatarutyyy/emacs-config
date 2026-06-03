@@ -726,110 +726,347 @@ Expected entry in ~/.authinfo.gpg:
       :stream t
       :models '("claude-sonnet-4-6")))
 
-  ;; 既定は軽めのモデルにする
   (setq gptel-backend my/gptel-iniad-openai-backend
-        gptel-model "o4-mini"))
+        gptel-model "gpt-5.4"))
 
 ;;; ----------------------------------------------------------
-;;; AI commit messages: gptel-magit
+;;; AI-assisted Magit commit planning
 ;;; ----------------------------------------------------------
 
-(use-package gptel-magit
-  :after (gptel magit)
-  :hook (magit-mode . gptel-magit-install)
-  :init
-  (defcustom my/gptel-magit-commit-style 'conventional-japanese
-    "Commit message style used by gptel-magit."
-    :type '(choice
-            (const :tag "Conventional Commit / Japanese" conventional-japanese)
-            (const :tag "Conventional Commit / English" conventional-english)
-            (const :tag "Plain Commit / Japanese" plain-japanese)
-            (const :tag "Plain Commit / English" plain-english))
-    :group 'gptel-magit)
+(defgroup my/magit-ai nil
+  "AI-assisted commit planning and commit message generation for Magit."
+  :group 'tools)
 
-  (defun my/gptel-magit-commit-prompt ()
-    "Return a commit prompt according to `my/gptel-magit-commit-style'."
-    (pcase my/gptel-magit-commit-style
-      ('conventional-japanese
-       (concat
-        gptel-magit-prompt-conventional-commits
-        "\n\n"
-        "Additional rules:\n"
-        "- Write the commit message in Japanese.\n"
-        "- Keep the Conventional Commits prefix in English, such as feat:, fix:, docs:, refactor:.\n"
-        "- The description after the prefix should be Japanese.\n"
-        "- Output only the commit message.\n"
-        "- Do not include markdown fences.\n"))
+(defcustom my/magit-ai-default-commit-style 'conventional-japanese
+  "Default commit message style for `my/magit-ai-insert-commit-message'."
+  :type '(choice
+          (const :tag "Conventional Commit / Japanese" conventional-japanese)
+          (const :tag "Conventional Commit / English" conventional-english)
+          (const :tag "Plain Commit / Japanese" plain-japanese)
+          (const :tag "Plain Commit / English" plain-english))
+  :group 'my/magit-ai)
 
-      ('conventional-english
-       (concat
-        gptel-magit-prompt-conventional-commits
-        "\n\n"
-        "Additional rules:\n"
-        "- Write the entire commit message in English.\n"
-        "- Output only the commit message.\n"
-        "- Do not include markdown fences.\n"))
+(defcustom my/magit-ai-max-diff-chars 120000
+  "Maximum number of diff characters sent to the AI model."
+  :type 'integer
+  :group 'my/magit-ai)
 
-      ('plain-japanese
-       "You are an expert at writing Git commit messages.
+(defconst my/magit-ai-commit-style-candidates
+  '("conventional-japanese"
+    "conventional-english"
+    "plain-japanese"
+    "plain-english")
+  "Commit message styles supported by my Magit AI helpers.")
 
-Generate a concise Git commit message from the staged diff.
+(defun my/magit-ai--git-root ()
+  "Return the current Git repository root."
+  (or (and (fboundp 'magit-toplevel)
+           (magit-toplevel))
+      (locate-dominating-file default-directory ".git")
+      (user-error "This buffer is not inside a Git repository")))
+
+(defun my/magit-ai--git-string (root &rest args)
+  "Run git with ARGS in ROOT and return its output as a string."
+  (with-temp-buffer
+    (let ((default-directory root)
+          (exit-code (apply #'process-file "git" nil t nil args)))
+      (unless (zerop exit-code)
+        (user-error "git %s failed:\n%s"
+                    (string-join args " ")
+                    (string-trim (buffer-string))))
+      (buffer-string))))
+
+(defun my/magit-ai--truncate (text)
+  "Truncate TEXT so it fits within `my/magit-ai-max-diff-chars'."
+  (if (<= (length text) my/magit-ai-max-diff-chars)
+      text
+    (concat
+     (substring text 0 my/magit-ai-max-diff-chars)
+     "\n\n[TRUNCATED: diff was longer than my/magit-ai-max-diff-chars]\n")))
+
+(defun my/magit-ai--repo-context (&optional staged-only)
+  "Return Git status and diff context.
+When STAGED-ONLY is non-nil, include only the staged diff."
+  (let* ((root (my/magit-ai--git-root))
+         (status (my/magit-ai--git-string root "status" "--short"))
+         (staged (my/magit-ai--git-string root "diff" "--staged" "--"))
+         (unstaged (unless staged-only
+                     (my/magit-ai--git-string root "diff" "--"))))
+    (when (and staged-only (string-empty-p (string-trim staged)))
+      (user-error "There is no staged diff. Stage changes in Magit first"))
+    (my/magit-ai--truncate
+     (concat
+      "Repository root:\n" root "\n\n"
+      "git status --short:\n"
+      (if (string-empty-p (string-trim status))
+          "[clean]\n"
+        status)
+      "\n\n"
+      "git diff --staged --:\n"
+      (if (string-empty-p (string-trim staged))
+          "[no staged changes]\n"
+        staged)
+      (unless staged-only
+        (concat
+         "\n\n"
+         "git diff --:\n"
+         (if (string-empty-p (string-trim unstaged))
+             "[no unstaged changes]\n"
+           unstaged)))))))
+
+(defun my/magit-ai--request (prompt system callback)
+  "Send PROMPT to gptel with SYSTEM and call CALLBACK with the response."
+  (require 'gptel)
+  (unless (fboundp 'gptel-request)
+    (user-error "gptel-request is not available"))
+  (message "Requesting AI assistance for Git changes...")
+  (gptel-request
+      prompt
+    :system system
+    :callback
+    (lambda (response info)
+      (if (not response)
+          (message "AI request failed: %S" info)
+        (funcall callback (string-trim response))))))
+
+(defun my/magit-ai--show-buffer (buffer-name title body)
+  "Show BODY in BUFFER-NAME with TITLE."
+  (let ((buffer (get-buffer-create buffer-name)))
+    (with-current-buffer buffer
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (insert title "\n"
+                (make-string (length title) ?=)
+                "\n\n"
+                body
+                "\n")
+        (goto-char (point-min))
+        (text-mode)
+        (view-mode 1)))
+    (display-buffer buffer)))
+
+(defun my/magit-ai--commit-style-label (style)
+  "Return a human-readable label for commit STYLE."
+  (pcase style
+    ('conventional-japanese "Conventional Commit / Japanese")
+    ('conventional-english "Conventional Commit / English")
+    ('plain-japanese "Plain Commit / Japanese")
+    ('plain-english "Plain Commit / English")
+    (_ (symbol-name style))))
+
+(defun my/magit-ai-read-commit-style ()
+  "Read a commit message style from the minibuffer."
+  (intern
+   (completing-read
+    "Commit message style: "
+    my/magit-ai-commit-style-candidates
+    nil t nil nil
+    (symbol-name my/magit-ai-default-commit-style))))
+
+(defun my/magit-ai-set-default-commit-style ()
+  "Set the default commit message style used by my Magit AI helpers."
+  (interactive)
+  (setq my/magit-ai-default-commit-style
+        (my/magit-ai-read-commit-style))
+  (message "Default Magit AI commit style: %s"
+           (my/magit-ai--commit-style-label
+            my/magit-ai-default-commit-style)))
+
+(defun my/magit-ai--plan-system-prompt ()
+  "Return the system prompt for commit planning."
+  "You are an expert software maintainer helping a developer design a clean Git history.
+
+Analyze the provided git status, staged diff, and unstaged diff.
+Propose an appropriate commit split.
 
 Rules:
-- Write the commit message in Japanese.
-- Do not use Conventional Commits prefixes such as feat:, fix:, docs:, refactor:.
-- First line: concise summary.
-- If necessary, add a blank line and a short body.
-- Prefer intent and user-visible effect over implementation details.
+- Do not invent changes that are not present in the diff.
+- Prefer small, reviewable commits.
+- Separate unrelated concerns.
+- Do not split mechanically by file when one logical change spans multiple files.
+- Do not combine unrelated changes merely because they touch the same file.
+- Explain why each commit boundary exists.
+- Give concrete staging guidance, but do not output shell commands that mutate the repository.
+- If the diff is too broad, risky, or truncated, say so clearly.
+- For each proposed commit, provide four message candidates:
+  1. Conventional Commit in Japanese
+  2. Conventional Commit in English
+  3. Plain Japanese
+  4. Plain English
+
+Output in this exact structure:
+
+# Summary
+
+# Proposed commits
+
+## Commit 1
+Purpose:
+Files:
+Why this boundary:
+Suggested staging:
+Messages:
+- conventional_ja:
+- conventional_en:
+- plain_ja:
+- plain_en:")
+
+(defun my/magit-ai-suggest-commit-plan ()
+  "Ask the AI to propose commit granularity, staging boundaries, and messages."
+  (interactive)
+  (let ((context (my/magit-ai--repo-context nil)))
+    (my/magit-ai--request
+     context
+     (my/magit-ai--plan-system-prompt)
+     (lambda (response)
+       (my/magit-ai--show-buffer
+        "*magit-ai-commit-plan*"
+        "Magit AI Commit Plan"
+        response)))))
+
+(defun my/magit-ai--message-system-prompt (style)
+  "Return the system prompt for commit message generation using STYLE."
+  (concat
+   "You are an expert at writing Git commit messages.
+
+Generate a commit message from the staged diff only.
+
+Hard rules:
+- Use only the staged diff as evidence.
+- Do not mention unstaged changes.
+- Do not invent changes that are not present in the diff.
 - Output only the commit message.
 - Do not include markdown fences.
-- Do not include the raw diff.
-- Do not invent changes that are not present in the diff.")
+- Do not include explanations.
+- Prefer intent and user-visible effect over low-level implementation details.
 
-      ('plain-english
-       "You are an expert at writing Git commit messages.
+Selected style: "
+   (my/magit-ai--commit-style-label style)
+   "\n\n"
+   (pcase style
+     ('conventional-japanese
+      "Style rules:
+- Write the message in Japanese.
+- Use Conventional Commits.
+- Keep the type prefix in English, such as feat:, fix:, docs:, refactor:, chore:, test:.
+- If a scope is useful, use type(scope): summary.
+- Write the summary after the prefix in Japanese.")
+     ('conventional-english
+      "Style rules:
+- Write the entire message in English.
+- Use Conventional Commits.
+- If a scope is useful, use type(scope): summary.")
+     ('plain-japanese
+      "Style rules:
+- Write the message in Japanese.
+- Do not use Conventional Commit prefixes such as feat:, fix:, docs:, refactor:.
+- First line should be a concise summary.
+- Add a blank line and a short body only when it improves clarity.")
+     ('plain-english
+      "Style rules:
+- Write the message in English.
+- Do not use Conventional Commit prefixes such as feat:, fix:, docs:, refactor:.
+- First line should be a concise summary.
+- Add a blank line and a short body only when it improves clarity."))))
 
-Generate a concise Git commit message from the staged diff.
+(defun my/magit-ai--replace-commit-message (message)
+  "Insert MESSAGE into the current commit buffer.
+Preserve Git comment lines when they exist."
+  (let ((inhibit-read-only t))
+    (goto-char (point-min))
+    (let ((comment-start
+           (save-excursion
+             (when (re-search-forward "^#" nil t)
+               (match-beginning 0)))))
+      (if comment-start
+          (delete-region (point-min) comment-start)
+        (erase-buffer))
+      (goto-char (point-min))
+      (insert message "\n\n"))))
 
-Rules:
-- Write the commit message in English.
-- Do not use Conventional Commits prefixes such as feat:, fix:, docs:, refactor:.
-- First line: concise summary.
-- If necessary, add a blank line and a short body.
-- Prefer intent and user-visible effect over implementation details.
-- Output only the commit message.
-- Do not include markdown fences.
-- Do not include the raw diff.
-- Do not invent changes that are not present in the diff.")))
+(defun my/magit-ai--commit-message-buffer-p (buffer)
+  "Return non-nil when BUFFER is a Git commit message buffer."
+  (when (buffer-live-p buffer)
+    (with-current-buffer buffer
+      (or (derived-mode-p 'git-commit-mode)
+          (string= (buffer-name buffer) "COMMIT_EDITMSG")
+          (string-match-p "\\`COMMIT_EDITMSG\\(?:<[0-9]+>\\)?\\'"
+                          (buffer-name buffer))
+          (and buffer-file-name
+               (string= (file-name-nondirectory buffer-file-name)
+                        "COMMIT_EDITMSG"))))))
 
-  (defun my/gptel-magit-set-commit-style ()
-    "Select commit message style for gptel-magit."
-    (interactive)
-    (setq my/gptel-magit-commit-style
-          (intern
-           (completing-read
-            "Commit message style: "
-            '("conventional-japanese"
-              "conventional-english"
-              "plain-japanese"
-              "plain-english")
-            nil t nil nil
-            (symbol-name my/gptel-magit-commit-style))))
-    (setq gptel-magit-commit-prompt
-          (my/gptel-magit-commit-prompt))
-    (message "gptel-magit commit style: %s"
-             my/gptel-magit-commit-style))
+(defun my/magit-ai--find-commit-message-buffer ()
+  "Return the most suitable Git commit message buffer, or nil."
+  (require 'seq)
+  (or (and (my/magit-ai--commit-message-buffer-p (current-buffer))
+           (current-buffer))
+      (seq-find #'my/magit-ai--commit-message-buffer-p
+                (buffer-list))))
 
-  :config
-  ;; Default:
-  ;;   Conventional Commits + Japanese
-  (setq gptel-magit-commit-prompt
-        (my/gptel-magit-commit-prompt))
+(defun my/magit-ai--show-or-insert-message (_target-buffer response)
+  "Insert RESPONSE into an existing Git commit message buffer.
+If no commit message buffer exists, show RESPONSE in a fallback buffer."
+  (if-let ((commit-buffer (my/magit-ai--find-commit-message-buffer)))
+      (progn
+        (with-current-buffer commit-buffer
+          (my/magit-ai--replace-commit-message response))
+        (pop-to-buffer commit-buffer)
+        (message "Inserted AI commit message into %s"
+                 (buffer-name commit-buffer)))
+    (my/magit-ai--show-buffer
+     "*magit-ai-commit-message*"
+     "Magit AI Commit Message"
+     (concat
+      response
+      "\n\n"
+      "Note: No COMMIT_EDITMSG buffer was found. "
+      "Open Magit commit buffer first, then run "
+      "M-x my/magit-ai-insert-commit-message."))))
 
-  ;; Convenient global selector.
-  (global-set-key
-   (kbd "C-c g m")
-   #'my/gptel-magit-set-commit-style))
+(defun my/magit-ai-insert-commit-message (&optional style)
+  "Generate a commit message from the staged diff and insert it.
+When STYLE is nil, prompt for one of the four supported styles."
+  (interactive)
+  (let* ((style (or style (my/magit-ai-read-commit-style)))
+         (context (my/magit-ai--repo-context t))
+         (target-buffer (current-buffer)))
+    (my/magit-ai--request
+     context
+     (my/magit-ai--message-system-prompt style)
+     (lambda (response)
+       (my/magit-ai--show-or-insert-message target-buffer response)))))
+
+(defun my/magit-ai-generate-commit-message-ja-conventional ()
+  "Generate a Japanese Conventional Commit message from the staged diff."
+  (interactive)
+  (my/magit-ai-insert-commit-message 'conventional-japanese))
+
+(defun my/magit-ai-generate-commit-message-en-conventional ()
+  "Generate an English Conventional Commit message from the staged diff."
+  (interactive)
+  (my/magit-ai-insert-commit-message 'conventional-english))
+
+(defun my/magit-ai-generate-commit-message-ja-plain ()
+  "Generate a plain Japanese commit message from the staged diff."
+  (interactive)
+  (my/magit-ai-insert-commit-message 'plain-japanese))
+
+(defun my/magit-ai-generate-commit-message-en-plain ()
+  "Generate a plain English commit message from the staged diff."
+  (interactive)
+  (my/magit-ai-insert-commit-message 'plain-english))
+
+(with-eval-after-load 'magit
+  (require 'transient)
+
+  (transient-append-suffix 'magit-status-jump nil
+    '("A" "AI commit plan" my/magit-ai-suggest-commit-plan))
+
+  (with-eval-after-load 'git-commit
+    (define-key git-commit-mode-map
+                (kbd "C-c C-a")
+                #'my/magit-ai-insert-commit-message)))
 
 ;;; ==========================================================
 ;;; EIN Emacs IPython Notebook
