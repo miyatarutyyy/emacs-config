@@ -767,5 +767,21 @@
   (add-hook 'server-after-make-frame-hook
             #'my/server-switch-to-restored-buffer))
 
+;;; ==========================================================
+;;; Restart Emacs daemon
+;;; ==========================================================
+
+(defun my/restart-emacs-daemon ()
+  "Restart the systemd-managed Emacs daemon, then open a new frame."
+  (interactive)
+  (when (yes-or-no-p "Restart Emacs daemon? ")
+    (save-some-buffers t)
+    (call-process
+     "sh" nil 0 nil
+     "-lc"
+     "systemd-run --user --collect --unit=restart-emacs-from-emacs sh -lc 'systemctl --user restart emacs.service; sleep 0.5; emacsclient -c'")))
+
+(global-set-key (kbd "C-c r e") #'my/restart-emacs-daemon)
+
 (provide 'init)
 ;;; init.el ends here
