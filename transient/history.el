@@ -2,4 +2,5 @@
  (magit-commit
   ("--verbose"))
  (magit-dispatch nil)
+ (magit-merge nil)
  (magit-push nil))
