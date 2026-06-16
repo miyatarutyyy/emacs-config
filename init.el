@@ -314,6 +314,29 @@
 ;; Move Help from C-h to C-c h
 (define-key global-map (kbd "C-c h") help-map)
 
+;;; ==========================================================
+;;; Japanese input: NSKK
+;;; ==========================================================
+
+(use-package nskk
+  :straight (:type git
+                   :host github
+                   :repo "takeokunn/nskk.el"
+                   :files ("src/*.el"))
+  :demand t
+  :custom
+  (nskk-state-default-mode 'ascii)
+  (nskk-dict-system-dictionary-files
+   '("/usr/share/skk/SKK-JISYO.L"
+     "/usr/share/skk/SKK-JISYO.jinmei"
+     "/usr/share/skk/SKK-JISYO.geo"))
+  (nskk-dict-user-dictionary-file
+   (locate-user-emacs-file "nskk-jisyo"))
+  (nskk-henkan-show-candidates-nth 2)
+  (nskk-dict-cache-enabled t)
+  :config
+  (nskk-global-mode 1))
+
 ;;; ===========================================================================
 ;;; Completion minibuffer: vertico / orderless / marginalia / consult / embark
 ;;; ===========================================================================
@@ -1069,21 +1092,7 @@ When STYLE is nil, prompt for one of the four supported styles."
                 #'my/magit-ai-insert-commit-message)))
 
 ;;; ==========================================================
-;;; EIN Emacs IPython Notebook
-;;; ==========================================================
-
-(use-package ein
-  :commands
-  (ein:notebooklist-open
-   ein:notebook-open
-   ein:login)
-  :mode
-  ("\\.ipynb\\'" . ein:notebook-mode)
-  :config
-  (setq ein:output-area-inlined-images t))
-
-;;; ==========================================================
-;;; Kaggle / Jupyter / Org-Babel
+;;; Org / Org-Babel
 ;;; ==========================================================
 
 (use-package org
@@ -1098,156 +1107,6 @@ When STYLE is nil, prompt for one of the four supported styles."
    'org-babel-load-languages
    '((emacs-lisp . t)
      (python . t))))
-
-(defconst my/kaggle-project-root "/home/trt-ryzen7/kaggle-project/"
-  "Default Kaggle project directory.")
-
-(defconst my/kaggle-venv-bin
-  (expand-file-name ".venv/bin" my/kaggle-project-root)
-  "Virtualenv bin directory for Kaggle/Jupyter client tools.")
-
-(defun my/prepend-to-path (directory)
-  "Prepend DIRECTORY to `exec-path' and PATH when it exists."
-  (when (file-directory-p directory)
-    (add-to-list 'exec-path directory)
-    (setenv "PATH" (concat directory path-separator (getenv "PATH")))))
-
-;; Emacs daemon / systemd から jupyter と kaggle を見つけられるようにする
-(my/prepend-to-path my/kaggle-venv-bin)
-
-(use-package jupyter
-  :ensure t
-  :after org
-  :demand t
-  :commands
-  (jupyter-connect-repl
-   jupyter-run-repl
-   jupyter-server-list-kernels)
-  :config
-  (require 'ob-jupyter)
-
-  (setq jupyter-api-authentication-method 'token)
-
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((emacs-lisp . t)
-     (python . t)
-     (jupyter . t)))
-
-  ;; `jupyter-python' is an alias generated from kernelspecs, not a separate
-  ;; executor.  Create the aliases during daemon startup as well as in Org
-  ;; buffers so `M-: (fboundp 'org-babel-execute:jupyter-python)' is meaningful.
-  (with-demoted-errors "Error creating Jupyter Org aliases: %S"
-    (org-babel-jupyter-aliases-from-kernelspecs t))
-
-  (with-eval-after-load 'jupyter-repl
-    (defun my/jupyter-repl-sync-execution-state-safely (orig &rest args)
-      "Demote non-critical Jupyter REPL prompt state sync errors."
-      (with-demoted-errors "Error syncing Jupyter REPL state: %S"
-        (apply orig args)))
-
-    (advice-add 'jupyter-repl-sync-execution-state
-                :around #'my/jupyter-repl-sync-execution-state-safely))
-
-  (setq org-babel-default-header-args:jupyter-python
-        '((:session . "kaggle")
-          (:kernel . "python3")
-          (:async . "yes")
-          (:results . "both")
-          (:exports . "both"))))
-
-(defun my/kaggle-project-directory ()
-  "Return a directory suitable for running Kaggle CLI commands."
-  (or (locate-dominating-file default-directory "kernel-metadata.json")
-      (locate-dominating-file default-directory "pyproject.toml")
-      (and (file-directory-p my/kaggle-project-root)
-           my/kaggle-project-root)
-      default-directory))
-
-(defun my/kaggle-command-string (args)
-  "Return a shell command string for running kaggle with ARGS."
-  (let ((kaggle (executable-find "kaggle")))
-    (unless kaggle
-      (user-error "kaggle command was not found in exec-path"))
-    (string-join (mapcar #'shell-quote-argument (cons kaggle args)) " ")))
-
-(defun my/kaggle-compile (args &optional confirm-p)
-  "Run Kaggle CLI with ARGS via `compile'.
-When CONFIRM-P is non-nil, ask before running the command."
-  (let ((command (my/kaggle-command-string args))
-        (default-directory (my/kaggle-project-directory)))
-    (when (or (not confirm-p)
-              (yes-or-no-p (format "Run `%s' in %s? " command default-directory)))
-      (compile command))))
-
-(defun my/kaggle-version ()
-  "Show Kaggle CLI version."
-  (interactive)
-  (my/kaggle-compile '("--version")))
-
-(defun my/kaggle-competitions-list ()
-  "List Kaggle competitions."
-  (interactive)
-  (my/kaggle-compile '("competitions" "list")))
-
-(defun my/kaggle-kernels-list-mine ()
-  "List the current user's Kaggle kernels."
-  (interactive)
-  (my/kaggle-compile '("kernels" "list" "--mine")))
-
-(defun my/kaggle-kernels-status (kernel)
-  "Show status for Kaggle KERNEL, e.g. user/kernel-slug."
-  (interactive "sKernel slug (user/kernel): ")
-  (my/kaggle-compile (list "kernels" "status" kernel)))
-
-(defun my/kaggle-kernels-pull (kernel directory)
-  "Pull Kaggle KERNEL into DIRECTORY."
-  (interactive
-   (list (read-string "Kernel slug (user/kernel): ")
-         (read-directory-name "Pull into directory: " (my/kaggle-project-directory))))
-  (my/kaggle-compile (list "kernels" "pull" kernel "-p" directory) t))
-
-(defun my/kaggle-kernels-push (directory)
-  "Push a Kaggle kernel from DIRECTORY."
-  (interactive
-   (list (read-directory-name "Kernel directory: " (my/kaggle-project-directory))))
-  (my/kaggle-compile (list "kernels" "push" "-p" directory) t))
-
-(defun my/kaggle-kernels-output (kernel directory)
-  "Download output for Kaggle KERNEL into DIRECTORY."
-  (interactive
-   (list (read-string "Kernel slug (user/kernel): ")
-         (read-directory-name "Output directory: " (my/kaggle-project-directory))))
-  (my/kaggle-compile (list "kernels" "output" kernel "-p" directory) t))
-
-(defun my/kaggle-competitions-submit (competition file message)
-  "Submit FILE to COMPETITION with MESSAGE."
-  (interactive
-   (list (read-string "Competition: ")
-         (read-file-name "Submission file: " (my/kaggle-project-directory) nil t)
-         (read-string "Submission message: ")))
-  (my/kaggle-compile
-   (list "competitions" "submit" "-c" competition "-f" file "-m" message)
-   t))
-
-(defun my/kaggle-jupyter-list-kernels (&optional reset-server)
-  "List live kernels on a Kaggle Jupyter Server.
-With prefix RESET-SERVER, prompt for the server URL again."
-  (interactive "P")
-  (require 'jupyter-server)
-  (let ((jupyter-api-authentication-method 'token)
-        (current-prefix-arg reset-server))
-    (call-interactively #'jupyter-server-list-kernels)))
-
-(defun my/kaggle-jupyter-session-name (url name)
-  "Copy an Org :session value for Jupyter server URL and kernel NAME.
-The token is entered interactively by emacs-jupyter and is not stored here."
-  (interactive "sJupyter Server URL: \nsSession name: ")
-  (require 'jupyter-tramp)
-  (let* ((root (jupyter-tramp-file-name-from-url url))
-         (session (concat (file-remote-p root) "/" name)))
-    (kill-new session)
-    (message "Copied Org :session value: %s" session)))
 
 ;;; ==========================================================
 ;;; Session restore
